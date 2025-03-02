@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Blog - POO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .header-title {
+            font-weight: bold;
+        }
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .auth-buttons button {
+            padding: 8px 15px;
+            border: none;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .blog-container {
+            display: flex;
+            gap: 20px;
+        }
+        .posts-list {
+            flex: 1;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .post-creation {
+            flex: 2;
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        .post-item {
+            padding: 10px;
+            background-color: #6c63ff;
+            color: white;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .action-button {
+            background-color: #6c63ff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .add-post-button {
+    width: 10%;
+    HEIGHT: 10%;
+}
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .post-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .close-button {
+            align-self: flex-end;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+        }
+        .user-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-title">
+            CODE WALL
+        </div>
+        <div class="header-title">
+            My Blogs
+        </div>
+        <div class="auth-buttons">
+            <button id="loginBtn">Login</button>
+            <button id="signupBtn">Sign Up</button>
+            <div class="user-info" id="userInfo"></div>
+        </div>
+    </header>
+
+    <h2>Your Blog Posts</h2>
+    
+    <div class="blog-container">
+        <div class="posts-list" id="postsList">
+            <!-- Les posts seront affichés ici -->
+        </div>
+        
+        <button class="action-button add-post-button" id="addPostBtn">Add New Post</button>
+        
+        <div class="post-creation" id="postCreation">
+            <button class="close-button" id="closePostForm">×</button>
+            <h3>Your Post</h3>
+            <div class="post-form">
+                <input type="text" id="postTitle" placeholder="Title">
+                <textarea id="postDescription" rows="10" placeholder="Description"></textarea>
+                <button class="action-button" id="submitPostBtn">POST</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de connexion -->
+    <div class="auth-modal" id="loginModal">
+        <div class="modal-content">
+            <h2>Login</h2>
+            <input type="text" id="loginUsername" placeholder="Username">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button class="action-button" id="loginSubmitBtn">Login</button>
+            <button id="closeLoginModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Modal d'inscription -->
+    <div class="auth-modal" id="signupModal">
+        <div class="modal-content">
+            <h2>Sign Up</h2>
+            <input type="text" id="signupUsername" placeholder="Username">
+            <input type="password" id="signupPassword" placeholder="Password">
+            <button class="action-button" id="signupSubmitBtn">Sign Up</button>
+            <button id="closeSignupModal">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        
+        class User {
+            constructor(username, password) {
+                this.username = username; 
+                this.password = password; 
+                this.id = Date.now().toString(); 
+            }
+    
+            
+            toJSON() {
+                return {
+                    id: this.id,
+                    username: this.username,
+                    password: this.password
+                };
+            }
+    
+            static fromJSON(json) {
+                const user = new User(json.username, json.password);
+                user.id = json.id;
+                return user;
+            }
+        }
+    
+        // --- Classe Post ---
+        class Post {
+            constructor(title, description, userId) {
+                this.id = Date.now().toString(); //added
+                this.title = title;             
+                this.description = description; 
+                this.userId = userId;           
+                this.date = new Date();        //added
+            }
+    
+            // Convertit l'objet Post en format JSON
+            toJSON() {
+                return {
+                    id: this.id,
+                    title: this.title,
+                    description: this.description,
+                    userId: this.userId,
+                    date: this.date.toISOString() // Sauvegarde de la date en format ISO
+                };
+            }
+    
+            static fromJSON(json) {
+                const post = new Post(json.title, json.description, json.userId);
+                post.id = json.id;
+                post.date = new Date(json.date); 
+                return post;
+            }
+        }
+    
+        // --- Classe BlogManager ---
+        class BlogManager {
+            constructor() {
+                this.users = [];        
+                this.posts = [];        
+                this.currentUser = null; 
+                this.loadFromLocalStorage(); 
+            }
+    
+            // Charge les données (utilisateurs, posts, utilisateur connecté) depuis localStorage
+            loadFromLocalStorage() {
+                const usersJSON = localStorage.getItem('users');
+                if (usersJSON) {
+                    const usersData = JSON.parse(usersJSON);
+                    this.users = usersData.map(user => User.fromJSON(user));
+                }
+    
+                // Chargement des posts sauvegardés
+                const postsJSON = localStorage.getItem('posts');
+                if (postsJSON) {
+                    const postsData = JSON.parse(postsJSON);
+                    this.posts = postsData.map(post => Post.fromJSON(post));
+                }
+    
+                // Vérifie si un utilisateur est actuellement connecté
+                const currentUserJSON = localStorage.getItem('currentUser');
+                if (currentUserJSON) {
+                    this.currentUser = User.fromJSON(JSON.parse(currentUserJSON));
+                }
+            }
+    
+            
+            saveToLocalStorage() {
+                localStorage.setItem('users', JSON.stringify(this.users.map(user => user.toJSON())));
+                localStorage.setItem('posts', JSON.stringify(this.posts.map(post => post.toJSON())));
+                if (this.currentUser) {
+                    localStorage.setItem('currentUser', JSON.stringify(this.currentUser.toJSON()));
+                } else {
+                    localStorage.removeItem('currentUser');
+                }
+            }
+    
+            // Ajoute un nouvel utilisateur
+            addUser(username, password) {
+                const existingUser = this.users.find(user => user.username === username);
+                if (existingUser) {
+                    return false; 
+                }
+                
+                const newUser = new User(username, password);
+                this.users.push(newUser);
+                this.saveToLocalStorage();
+                return true;
+            }
+    
+            // Permet à un utilisateur de se connecter
+            login(username, password) {
+                const user = this.users.find(
+                    user => user.username === username && user.password === password
+                );
+                
+                if (user) {
+                    this.currentUser = user;
+                    this.saveToLocalStorage();
+                    return true;
+                }
+                return false;
+            }
+    
+            // Déconnecte l'utilisateur
+            logout() {
+                this.currentUser = null;
+                localStorage.removeItem('currentUser');
+                this.saveToLocalStorage();
+            }
+    
+            // Ajoute un nouveau post. L'utilisateur doit être connecté pour créer un post.
+            addPost(title, description) {
+                if (!this.currentUser) {
+                    return false; // Retourne false si aucun utilisateur n'est connecté
+                }
+                
+                const newPost = new Post(title, description, this.currentUser.id);
+                this.posts.push(newPost);
+                this.saveToLocalStorage();
+                return true;
+            }
+    
+            // Récupère tous les posts, triés par date décroissante (du plus récent au plus ancien)
+            getAllPosts() {
+                return this.posts.sort((a, b) => b.date - a.date);
+            }
+    
+            // Récupère uniquement les posts de l'utilisateur actuellement connecté
+            getCurrentUserPosts() {
+                if (!this.currentUser) return [];
+                
+                return this.posts.filter(
+                    post => post.userId === this.currentUser.id
+                ).sort((a, b) => b.date - a.date);
+            }
+        }
+    
+        // --- Initialisation de l'application ---
+        const blogManager = new BlogManager();
+        let isLoggedIn = blogManager.currentUser !== null;
+    
+        const postsList = document.getElementById('postsList');
+        const addPostBtn = document.getElementById('addPostBtn');
+        const postCreation = document.getElementById('postCreation');
+        const closePostForm = document.getElementById('closePostForm');
+        const postTitle = document.getElementById('postTitle');
+        const postDescription = document.getElementById('postDescription');
+        const submitPostBtn = document.getElementById('submitPostBtn');
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const loginModal = document.getElementById('loginModal');
+        const signupModal = document.getElementById('signupModal');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        const closeSignupModal = document.getElementById('closeSignupModal');
+        const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+        const signupSubmitBtn = document.getElementById('signupSubmitBtn');
+        const userInfo = document.getElementById('userInfo');
+    
+        function renderPosts() {
+            postsList.innerHTML = ''; // Réinitialise la liste des posts
+            const posts = isLoggedIn ? blogManager.getCurrentUserPosts() : blogManager.getAllPosts();
+            
+            // Si aucun post n'est disponible, afficher un message
+            if (posts.length === 0) {
+                postsList.innerHTML = '<p>No posts yet.</p>';
+                return;
+            }
+            
+            // Pour chaque post, créer un élément DOM et l'ajouter à la liste
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post-item';
+                postElement.textContent = post.title;
+                postsList.appendChild(postElement);
+                
+                postElement.addEventListener('click', () => {
+                    alert(`${post.title}\n\n${post.description}`);
+                });
+            });
+        }
+    
+        // ---Fonction pour mettre à jour l'interface utilisateur en fonction de l'état de connexion---
+        function updateUI() {
+            isLoggedIn = blogManager.currentUser !== null;
+            
+            if (isLoggedIn) {
+                // Si l'utilisateur est connecté, masquer les boutons Login/Sign Up et afficher les infos utilisateur
+                loginBtn.style.display = 'none';
+                signupBtn.style.display = 'none';
+                userInfo.style.display = 'block';
+                userInfo.textContent = `Logged in as: ${blogManager.currentUser.username} | Logout`;
+                // Permettre de se déconnecter en cliquant sur les informations utilisateur
+                userInfo.onclick = () => {
+                    blogManager.logout();
+                    updateUI();
+                };
+                // Afficher le bouton pour ajouter un nouveau post
+                addPostBtn.style.display = 'block';
+            } else {
+                // Si l'utilisateur n'est pas connecté, afficher les boutons Login/Sign Up et masquer les autres éléments
+                loginBtn.style.display = 'block';
+                signupBtn.style.display = 'block';
+                userInfo.style.display = 'none';
+                addPostBtn.style.display = 'none';
+                postCreation.style.display = 'none';
+            }
+            
+            // Affiche les posts en fonction du statut de connexion
+            renderPosts();
+        }
+    
+        // --- Gestion des événements ---
+    
+        // Ouvre le formulaire de création de post
+        addPostBtn.addEventListener('click', () => {
+            postCreation.style.display = 'block';
+        });
+    
+        // Ferme le formulaire de création de post et réinitialise les champs
+        closePostForm.addEventListener('click', () => {
+            postCreation.style.display = 'none';
+            postTitle.value = '';
+            postDescription.value = '';
+        });
+    
+        // Envoi du post lors du clic sur le bouton POST
+        submitPostBtn.addEventListener('click', () => {
+            const title = postTitle.value.trim();
+            const description = postDescription.value.trim();
+            
+            if (title && description) {
+                // Si le post est ajouté avec succès, réinitialise et ferme le formulaire, puis met à jour l'affichage des posts
+                if (blogManager.addPost(title, description)) {
+                    postTitle.value = '';
+                    postDescription.value = '';
+                    postCreation.style.display = 'none';
+                    renderPosts();
+                }
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+    
+        //---Gestion des modals d'authentification---
+        //just for opening and closing modals alredy defined in the HTML part 
+        // Affiche le modal de connexion
+        loginBtn.addEventListener('click', () => {
+            loginModal.style.display = 'flex';
+        });
+    
+        // Affiche le modal d'inscription
+        signupBtn.addEventListener('click', () => {
+            signupModal.style.display = 'flex';
+        });
+    
+        // Ferme le modal de connexion
+        closeLoginModal.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+        });
+    
+        // Ferme le modal d'inscription
+        closeSignupModal.addEventListener('click', () => {
+            signupModal.style.display = 'none';
+        });
+    
+        // Traitement du bouton de soumission pour la connexion
+        loginSubmitBtn.addEventListener('click', () => {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            if (username && password) {
+                // Si la connexion réussit, fermer le modal et mettre à jour l'interface
+                if (blogManager.login(username, password)) {
+                    loginModal.style.display = 'none';
+                    document.getElementById('loginUsername').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    updateUI();
+                } else {
+                    alert('Invalid username or password.');
+                }
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+    
+        // Traitement du bouton de soumission pour l'inscription
+        signupSubmitBtn.addEventListener('click', () => {
+            const username = document.getElementById('signupUsername').value.trim();
+            const password = document.getElementById('signupPassword').value.trim();
+            
+            if (username && password) {
+                // Si l'utilisateur est ajouté avec succès, fermer le modal et informer l'utilisateur
+                if (blogManager.addUser(username, password)) {
+                    signupModal.style.display = 'none';
+                    document.getElementById('signupUsername').value = '';
+                    document.getElementById('signupPassword').value = '';
+                    alert('Account created successfully! You can now login.');
+                } else {
+                    alert('Username already exists.');
+                }
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+    
+        // --- Initialisation de l'interface utilisateur ---
+        updateUI();
+    </script>    
+</body>
+</html>
